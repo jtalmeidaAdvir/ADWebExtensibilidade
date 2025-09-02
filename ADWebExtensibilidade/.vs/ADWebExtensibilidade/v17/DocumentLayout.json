@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\jpval\\Desktop\\ADWebExtensibilidade\\ADWebExtensibilidade\\",
+  "WorkspaceRootPath": "C:\\Users\\jtalm\\Desktop\\WEAPI\\ADWebExtensibilidade\\ADWebExtensibilidade\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{55FEBF56-15A8-4881-9621-97390BB83C77}|ADWebExtensibilidade\\ADWebExtensibilidade.csproj|c:\\users\\jpval\\desktop\\adwebextensibilidade\\adwebextensibilidade\\adwebextensibilidade\\classextendedcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{55FEBF56-15A8-4881-9621-97390BB83C77}|ADWebExtensibilidade\\ADWebExtensibilidade.csproj|c:\\users\\jtalm\\desktop\\weapi\\adwebextensibilidade\\adwebextensibilidade\\adwebextensibilidade\\classextendedcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{55FEBF56-15A8-4881-9621-97390BB83C77}|ADWebExtensibilidade\\ADWebExtensibilidade.csproj|solutionrelative:adwebextensibilidade\\classextendedcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -14,28 +14,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{e5c86464-96be-4d7c-9a8b-abcb3bbf5f92}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
-            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "ClassExtendedController.cs",
-              "DocumentMoniker": "C:\\Users\\jpval\\Desktop\\ADWebExtensibilidade\\ADWebExtensibilidade\\ADWebExtensibilidade\\ClassExtendedController.cs",
+              "DocumentMoniker": "C:\\Users\\jtalm\\Desktop\\WEAPI\\ADWebExtensibilidade\\ADWebExtensibilidade\\ADWebExtensibilidade\\ClassExtendedController.cs",
               "RelativeDocumentMoniker": "ADWebExtensibilidade\\ClassExtendedController.cs",
-              "ToolTip": "C:\\Users\\jpval\\Desktop\\ADWebExtensibilidade\\ADWebExtensibilidade\\ADWebExtensibilidade\\ClassExtendedController.cs",
+              "ToolTip": "C:\\Users\\jtalm\\Desktop\\WEAPI\\ADWebExtensibilidade\\ADWebExtensibilidade\\ADWebExtensibilidade\\ClassExtendedController.cs",
               "RelativeToolTip": "ADWebExtensibilidade\\ClassExtendedController.cs",
-              "ViewState": "AgIAAAQAAAAAAAAAAAAAAIsAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAALgFAAAAAAAAAAAiwOgFAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-20T09:01:05.045Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e5c86464-96be-4d7c-9a8b-abcb3bbf5f92}"
             }
           ]
         }

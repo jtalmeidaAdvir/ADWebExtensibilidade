@@ -165,6 +165,37 @@ ORDER BY NumProcesso DESC;
             }
         }
 
+
+
+        [Authorize]
+        [Route("ObterPedidos")]
+        [HttpGet]
+        public HttpResponseMessage ObterPedidos()
+        {
+            try
+            {
+                string query = $@"SELECT  C.Nome, STP.*
+FROM STP_processos AS STP
+INNER JOIN Clientes AS C ON STP.Cliente = C.Cliente
+where STP.Fechado != 1
+
+";
+                var response = ProductContext.MotorLE.Consulta(query);
+
+                if (response == null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum pedido encontrado.");
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter pedido: {ex.Message}");
+            }
+        }
+
+
         [Authorize]
         [Route("AreaclientListarpedidos/{IDCliente}")]
         [HttpGet]
@@ -206,32 +237,6 @@ ORDER BY NumProcesso DESC;
         }
 
 
-        [Authorize]
-        [Route("LstUltimoPedido")]
-        [HttpGet]
-        public HttpResponseMessage LstUltimoPedido()
-        {
-            try
-            {
-                string query = $@"SELECT TOP 1 *
-FROM STP_processos
-WHERE ID IS NOT NULL
-ORDER BY NumProcesso DESC;
-";
-                var response = ProductContext.MotorLE.Consulta(query);
-
-                if (response == null)
-                {
-                    return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum pedido encontrado.");
-                }
-
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
-            catch (Exception ex)
-            {
-                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter pedido: {ex.Message}");
-            }
-        }
 
 
         [Authorize]
@@ -1488,6 +1493,26 @@ COP_Obras.TipoEntidadeB WHEN '1' THEN 'Dono da Obra' WHEN '2' THEN 'Empreiteiro'
             catch (Exception ex)
             {
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter obras: {ex.Message}");
+            }
+        }
+
+
+        [Authorize]
+        [Route("Feriados")]
+        [HttpGet]
+        public HttpResponseMessage Feriados()
+        {
+            try
+            {
+                string query = @"SELECT * FROM Feriados
+        ";
+
+                var response = ProductContext.MotorLE.Consulta(query);
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter Feriados: {ex.Message}");
             }
         }
 
