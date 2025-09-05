@@ -134,6 +134,13 @@ namespace ADWebExtensibilidade
         public string UltimaNumIntervencao { get; set; }
     }
 
+
+    public class AtualizaDataPedidoDto
+    {
+        public Guid Id { get; set; }
+        public DateTime NovaData { get; set; }
+    }
+
     [RoutePrefix("ServicosTecnicos")]
     public class ServicosTecnicosController : ApiController
     {
@@ -165,6 +172,56 @@ ORDER BY NumProcesso DESC;
             }
         }
 
+
+        [Authorize]
+        [Route("VerificaDataPedidoAtualiza")]
+        [HttpPost]
+        public HttpResponseMessage VerificaDataPedidoAtualiza([FromBody] AtualizaDataPedidoDto dto)
+        {
+
+            try
+            {
+                string query = $@" SELECT TOP 1 DataHoraAbertura
+                                   FROM STP_processos
+                                   WHERE ID = '{dto.Id}'
+                                   ORDER BY NumProcesso DESC";
+
+
+                var result = ProductContext.MotorLE.Consulta(query);
+
+                if (result == null || result.NumLinhas() == 0)
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotFound,
+                        "Nenhum processo encontrado com o ID informado.");
+                }
+
+                DateTime dataBanco = result.DaValor<DateTime>("DataHoraAbertura");
+
+
+                // 👉 Só atualiza se a NovaData for menor
+                if (dto.NovaData < dataBanco)
+                {
+                    string updateQuery = $@"
+                    UPDATE STP_processos
+                    SET DataHoraAbertura = DATEADD(MINUTE, -5, '{dto.NovaData:yyyy-MM-dd HH:mm:ss}')
+                    WHERE ID = '{dto.Id}'";
+
+                    int rows = ProductContext.MotorLE.DSO.ExecuteSQL(updateQuery);
+
+                    return Request.CreateResponse(HttpStatusCode.OK,
+                        $"Data atualizada com sucesso. Registros afetados: {rows}");
+                }
+                else
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK,
+                        "Nenhuma atualização necessária (a data recebida não é menor).");
+                }
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter pedido: {ex.Message}");
+            }
+        }
 
 
         [Authorize]
@@ -1497,24 +1554,6 @@ COP_Obras.TipoEntidadeB WHEN '1' THEN 'Dono da Obra' WHEN '2' THEN 'Empreiteiro'
         }
 
 
-        [Authorize]
-        [Route("Feriados")]
-        [HttpGet]
-        public HttpResponseMessage Feriados()
-        {
-            try
-            {
-                string query = @"SELECT * FROM Feriados
-        ";
-
-                var response = ProductContext.MotorLE.Consulta(query);
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
-            catch (Exception ex)
-            {
-                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter Feriados: {ex.Message}");
-            }
-        }
 
         [Authorize]
         [Route("GetCAdicionais_Estimado/{IdObra}")]
@@ -3300,6 +3339,27 @@ CDU_Autorizacao = '0'
     [RoutePrefix("AlteracoesMensais")]
     public class AlteracoesMensaisController : ApiController
     {
+
+
+        [Authorize]
+        [Route("Feriados")]
+        [HttpGet]
+        public HttpResponseMessage Feriados()
+        {
+            try
+            {
+                string query = @"SELECT * FROM Feriados
+        ";
+
+                var response = ProductContext.MotorLE.Consulta(query);
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter Feriados: {ex.Message}");
+            }
+        }
+
         [Authorize]
         [Route("GetListaTipoFaltas")]
         [HttpGet]
