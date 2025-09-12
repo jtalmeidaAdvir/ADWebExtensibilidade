@@ -1553,7 +1553,23 @@ COP_Obras.TipoEntidadeB WHEN '1' THEN 'Dono da Obra' WHEN '2' THEN 'Empreiteiro'
             }
         }
 
+        [Authorize]
+        [Route("GetResponsavel/{codigo}")]
+        [HttpGet]
+        public HttpResponseMessage GetResponsavel(string codigo)
+        {
+            try
+            {
+                string query = $@"select CDU_AcessoUtilizador1 from COP_Obras where codigo='{codigo}'";
 
+                var response = ProductContext.MotorLE.Consulta(query);
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter responsavel: {ex.Message}");
+            }
+        }
 
         [Authorize]
         [Route("GetCAdicionais_Estimado/{IdObra}")]
@@ -2349,6 +2365,29 @@ ORDER BY Ordem;
             catch (Exception ex)
             {
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter clientes: {ex.Message}");
+            }
+        }
+
+        [Authorize]
+        [Route("LstArtigos")]
+        [HttpGet]
+        public HttpResponseMessage LstArtigos()
+        {
+            try
+            {
+                string query = $@"SELECT * FROM Artigo ";
+                var response = ProductContext.MotorLE.Consulta(query);
+
+                if (response == null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum Artigo encontrado.");
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter Artigo: {ex.Message}");
             }
         }
 
@@ -4235,7 +4274,7 @@ WHERE
         INSERT INTO COP_FichasPessoalItems (
             ID, FichasPessoalID, ComponenteID, Funcionario, ClasseID,
             SubEmpID, NumHoras, PrecoUnit, TipoEntidade, ColaboradorID,
-            Data, TotalHoras, Integrado
+            Data, TotalHoras, Integrado, CDU_OBS
         ) VALUES (
             '{itemID}',
             '{fichaID}',
@@ -4249,7 +4288,8 @@ WHERE
             {item.ColaboradorID},
             '{item.Data:yyyy-MM-dd}',
             0,
-            0
+            0,
+{(item.Observacoes != null ? $"'{item.Observacoes.Replace("'", "''")}'" : "NULL")}
         )
     ";
                     }
@@ -4259,7 +4299,7 @@ WHERE
         INSERT INTO COP_FichasPessoalItems (
             ID, FichasPessoalID, ComponenteID, Funcionario, ClasseID,
             SubEmpID, NumHoras, PrecoUnit, TipoEntidade, ColaboradorID,
-            Data, TotalHoras, Integrado, TipoHoraID
+            Data, TotalHoras, Integrado, TipoHoraID, CDU_OBS
         ) VALUES (
             '{itemID}',
             '{fichaID}',
@@ -4274,7 +4314,8 @@ WHERE
             '{item.Data:yyyy-MM-dd}',
             0,
             0,
-            '{item.TipoHoraID}'
+            '{item.TipoHoraID}',
+{(item.Observacoes != null ? $"'{item.Observacoes.Replace("'", "''")}'" : "NULL")}
         )
     ";
                     }
@@ -4703,9 +4744,10 @@ INSERT INTO COP_FichasEquipamentoItems (
         public int? SubEmpID { get; set; }
         public decimal NumHoras { get; set; }
         public decimal PrecoUnit { get; set; }
-        public string TipoEntidade { get; set; } = "O";
+        public string TipoEntidade { get; set; } = "O"; 
         public int ColaboradorID { get; set; }
         public DateTime Data { get; set; }
+        public string Observacoes { get; set; }
     }
 
     public class ParteDiariaEquipamentoCabecalhoDto
