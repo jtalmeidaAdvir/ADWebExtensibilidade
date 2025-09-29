@@ -134,6 +134,22 @@ namespace ADWebExtensibilidade
         public string UltimaNumIntervencao { get; set; }
     }
 
+    public class CriarContactoRequest
+    {
+        public string Nome { get; set; }
+
+        public string Email { get; set; }
+
+        public string Entidade { get; set; }
+
+        public string TipoEntidade { get; set; }
+
+        public string Contacto { get; set; }
+
+        public string TipoContacto { get; set; }
+    }
+
+
 
     public class AtualizaDataPedidoDto
     {
@@ -144,6 +160,7 @@ namespace ADWebExtensibilidade
     [RoutePrefix("ServicosTecnicos")]
     public class ServicosTecnicosController : ApiController
     {
+
 
         [Authorize]
         [Route("LstUltimoPedido")]
@@ -227,28 +244,78 @@ ORDER BY NumProcesso DESC;
         [Authorize]
         [Route("ObterPedidos")]
         [HttpGet]
-        public HttpResponseMessage ObterPedidos()
+        public HttpResponseMessage ObterPedidos(
+    string cliente = null, string nome = null,
+    bool incluirFechados = false, int page = 1, int pageSize = 50)
         {
             try
             {
-                string query = $@"SELECT  C.Nome, STP.*
-FROM STP_processos AS STP
-INNER JOIN Clientes AS C ON STP.Cliente = C.Cliente
-where STP.Fechado != 1
+                if (page < 1) page = 1;
+                if (pageSize < 1) pageSize = 50;
+                if (pageSize > 500) pageSize = 500;
 
-";
-                var response = ProductContext.MotorLE.Consulta(query);
+                string esc(string s) => (s ?? "").Replace("'", "''");
 
-                if (response == null)
+                var filtros = new List<string>();
+                if (!incluirFechados) filtros.Add("STP.Fechado <> 1");
+                if (!string.IsNullOrWhiteSpace(cliente))
+                    filtros.Add($"STP.Cliente = '{esc(cliente.Trim())}'");
+                if (!string.IsNullOrWhiteSpace(nome))
+                    filtros.Add($"C.Nome COLLATE Latin1_General_CI_AI LIKE '%{esc(nome.Trim())}%'");
+
+                string where = filtros.Count > 0 ? "WHERE " + string.Join(" AND ", filtros) : "";
+                int offset = (page - 1) * pageSize;
+
+                string query = $@"
+;WITH Base AS (
+  SELECT C.Nome, STP.*
+  FROM STP_processos STP
+  INNER JOIN Clientes C ON STP.Cliente = C.Cliente
+  {where}
+)
+SELECT * FROM Base
+ORDER BY DataHoraAbertura DESC
+OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+
+                var listaBE = ProductContext.MotorLE.Consulta(query);
+                if (listaBE == null)
+                    return Request.CreateResponse(HttpStatusCode.OK, new { DataSet = new { Table = new object[0] } });
+
+                // ⚠️ Converter StdBELista -> List<Dictionary<string,object>>
+                var rows = new List<Dictionary<string, object>>();
+                while (!listaBE.NoFim())
                 {
-                    return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum pedido encontrado.");
+                    var row = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                    for (int i = 0; i < listaBE.NumColunas(); i++)
+                    {
+                        var col = listaBE.Nome(i);
+                        row[col] = listaBE.Valor(i);
+                    }
+                    rows.Add(row);
+                    listaBE.Seguinte();
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, response);
+                // (opcional) total para paginação
+                string queryCount = $@"SELECT COUNT(*) AS Total
+                               FROM STP_processos STP
+                               INNER JOIN Clientes C ON STP.Cliente = C.Cliente
+                               {where}";
+                var totalBE = ProductContext.MotorLE.Consulta(queryCount);
+                int total = 0;
+                if (totalBE != null && !totalBE.NoFim())
+                {
+                    total = Convert.ToInt32(totalBE.Valor("Total"));
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, new
+                {
+                    DataSet = new { Table = rows },
+                    Total = total
+                });
             }
             catch (Exception ex)
             {
-                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter pedido: {ex.Message}");
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter pedidos: {ex.Message}");
             }
         }
 
@@ -293,7 +360,26 @@ where STP.Fechado != 1
             }
         }
 
-
+        [Authorize]
+        [Route("ObterInfoContratoProcesso/{id}")]
+        [HttpGet]
+        public HttpResponseMessage ObterInfoContratoProcesso(string id)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    return Request.CreateResponse<string>(HttpStatusCode.BadRequest, "ID não fornecido.");
+                }
+                string text = "SELECT\r\n                                    p.Id AS ProcessoId,\r\n                                    p.Cliente,\r\n                                    c.Id AS ContratoId,\r\n                                    c.*\r\n                                FROM stp_processos p\r\n                                INNER JOIN STP_Contratos c\r\n                                    ON p.ContratoId = c.Id\r\n                                WHERE p.Id = '" + id + "'\r\n                                  AND c.Id = p.ContratoID;";
+                StdBELista val = ProductContext.MotorLE.Consulta(text);
+                return Request.CreateResponse<StdBELista>(HttpStatusCode.OK, val);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse<string>(HttpStatusCode.InternalServerError, "Erro ao obter os contactos: " + ex.Message);
+            }
+        }
 
 
         [Authorize]
@@ -801,6 +887,50 @@ where STP.Fechado != 1
             }
         }
 
+
+        [Authorize]
+        [Route("GetEmailGeral/{IDCliente}")]
+        [HttpGet]
+        public HttpResponseMessage GetEmailGeral(string IDCliente)
+        {
+            try
+            {
+                string text = "SELECT email FROM Clientes where Cliente = '" + IDCliente + "'";
+                StdBELista val = ProductContext.MotorLE.Consulta(text);
+                if (val.NumLinhas() <= 0)
+                {
+                    return Request.CreateResponse<string>(HttpStatusCode.NotFound, "response");
+                }
+                return Request.CreateResponse<StdBELista>( HttpStatusCode.OK, val);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse<string>(HttpStatusCode.InternalServerError, "Erro ao obter email: " + ex.Message);
+            }
+        }
+
+
+        [Authorize]
+        [Route("GetEmailTecnico/{IDTecnico}")]
+        [HttpGet]
+        public HttpResponseMessage GetEmailTecnico(string IDTecnico)
+        {
+            try
+            {
+                string text = "select email from STP_Tecnicos where Tecnico = '" + IDTecnico + "'";
+                StdBELista val = ProductContext.MotorLE.Consulta(text);
+                if (val.NumLinhas() <= 0)
+                {
+                    return Request.CreateResponse<string>(HttpStatusCode.NotFound, "response");
+                }
+                return Request.CreateResponse<StdBELista>( HttpStatusCode.OK, val);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse<string>(HttpStatusCode.InternalServerError, "Erro ao obter email: " + ex.Message);
+            }
+        }
+
         [Authorize]
         [Route("ListarTiposProcesso")]
         [HttpGet]
@@ -1093,6 +1223,58 @@ where STP.Fechado != 1
             }
         }
 
+        [Authorize]
+        [Route("CriarContacto")]
+        [HttpPost]
+        public HttpResponseMessage CriarContacto([FromBody] CriarContactoRequest req)
+        {
+            if (req == null)
+            {
+                return Request.CreateResponse<string>(HttpStatusCode.BadRequest, "Dados de contacto não podem ser nulos.");
+            }
+            if (string.IsNullOrWhiteSpace(req.Contacto))
+            {
+                return Request.CreateResponse<string>(HttpStatusCode.BadRequest, "A chave do contacto (Contacto) não pode ser vazia.");
+            }
+
+            try
+            {
+                string text = req.Contacto.Trim();
+                string iD = Guid.NewGuid().ToString("D");
+                BasBEContacto val = new BasBEContacto
+                {
+                    ID = iD,
+                    Contacto = text,
+                    Nome = req.Nome,
+                    Email = req.Email
+                };
+                ProductContext.MotorLE.Base.Contactos.Actualiza(val);
+                string text2 = text.Replace("'", "''");
+                StdBELista val2 = ProductContext.MotorLE.Consulta("SELECT TOP 1 Id, Contacto FROM dbo.Contactos WHERE Contacto = '" + text2 + "' ORDER BY VersaoUltAct DESC");
+                if (val2 == null || val2.NumLinhas() == 0)
+                {
+                    return Request.CreateResponse<string>(HttpStatusCode.InternalServerError, "Não foi possível obter o ID do contacto.");
+                }
+                string iDContacto = val2.DaValor<string>("Id");
+                string text3 = val2.DaValor<string>("Contacto");
+                BasBELinhaContactoEntidade val3 = new BasBELinhaContactoEntidade
+                {
+                    IDContacto = iDContacto,
+                    Email = req.Email,
+                    Entidade = req.Entidade,
+                    TipoEntidade = req.TipoEntidade,
+                    TipoContacto = "GERAL"
+                };
+                ProductContext.MotorLE.Base.Contactos.ActualizaContactoNaEntidade(val3);
+                return Request.CreateResponse<string>(HttpStatusCode.OK, "Contacto criado com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse<string>(HttpStatusCode.InternalServerError, "Erro ao criar contacto: " + ex.Message);
+            }
+        }
+        
+
 
 
 
@@ -1260,21 +1442,20 @@ WHERE
         [HttpPost]
         public HttpResponseMessage CriarIntervencoes([FromBody] CriarIntervencaoRequest request)
         {
+            
             try
             {
-                int ultimaIntervencao = 1;
+                int num = 1;
                 try
                 {
-                    ultimaIntervencao = ProductContext.MotorLE.ServicosTecnicos.Intervencoes.DaNumeroUltimaIntervencao(request.ProcessoID);
-                    ultimaIntervencao++;
+                    num = ProductContext.MotorLE.ServicosTecnicos.Intervencoes.DaNumeroUltimaIntervencao(request.ProcessoID);
+                    num++;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Erro ao obter a última intervenção: {ex.Message}");
+                    Console.WriteLine("Erro ao obter a última intervenção: " + ex.Message);
                 }
-
-                // Criar nova intervenção
-                StpBEIntervencao intervencao = new StpBEIntervencao
+                StpBEIntervencao val = new StpBEIntervencao
                 {
                     ID = Guid.NewGuid().ToString(),
                     ProcessoID = request.ProcessoID,
@@ -1289,140 +1470,61 @@ WHERE
                     SeccaoAnt = request.SeccaoAnt,
                     Seccao = request.Seccao,
                     Moeda = "EUR",
-                    Cambio = 1,
+                    Cambio = 1.0,
                     Utilizador = request.Utilizador,
-                    NumIntervencao = ultimaIntervencao,
-                    DescricaoResposta = string.IsNullOrEmpty(request.DescricaoResposta) ? null : request.DescricaoResposta,
-                    ImputadoContrato = true,
+                    NumIntervencao = num,
+                    DescricaoResposta = (string.IsNullOrEmpty(request.DescricaoResposta) ? null : request.DescricaoResposta),
+                    ImputadoContrato = true
                 };
-
-                // Obter custo e preço do técnico
-                string queryTecnico = $@"SELECT * FROM STP_Tecnicos WHERE Tecnico = '{request.Tecnico}'";
-                var bdTecnico = ProductContext.MotorLE.Consulta(queryTecnico);
-                var horacusto = bdTecnico.DaValor<double>("HoraCusto");
-                var horapreco = bdTecnico.DaValor<double>("HoraPreco");
-
-                // Obter contrato
-                string queryContrato = $@"
-            SELECT DISTINCT 
-                p.ContratoID,
-					c.ID,
-					p.Cliente,
-					c.HorasTotais, 
-					c.HorasGastas 
-            FROM 
-                STP_Processos p
-            LEFT JOIN 
-                STP_Contratos c
-            ON 
-                p.ContratoID = c.ID
-            WHERE 
-                p.ID = '{request.ProcessoID}'";
-
-                var bdContrato = ProductContext.MotorLE.Consulta(queryContrato);
-                var horasTotais = bdContrato.DaValor<object>("HorasTotais");
-                var horasGastas = bdContrato.DaValor<object>("HorasGastas");
-
-                double horasTotaisDouble = horasTotais != null ? Math.Round(Convert.ToDouble(horasTotais), 2) : 0;
-                double horasGastasDouble = horasGastas != null ? Math.Round(Convert.ToDouble(horasGastas), 2) : 0;
-
-
-
-
-                foreach (var artigo in request.Artigos)
+                string text = "SELECT * FROM STP_Tecnicos WHERE Tecnico = '" + request.Tecnico + "'";
+                StdBELista val2 = ProductContext.MotorLE.Consulta(text);
+                double precoCusto = val2.DaValor<double>("HoraCusto");
+                double precoCliente = val2.DaValor<double>("HoraPreco");
+                string text2 = "\r\n            SELECT DISTINCT \r\n                p.ContratoID,\r\n\t\t\t\t\tc.ID,\r\n\t\t\t\t\tp.Cliente,\r\n\t\t\t\t\tc.HorasTotais, \r\n\t\t\t\t\tc.HorasGastas \r\n            FROM \r\n                STP_Processos p\r\n            LEFT JOIN \r\n                STP_Contratos c\r\n            ON \r\n                p.ContratoID = c.ID\r\n            WHERE \r\n                p.ID = '" + request.ProcessoID + "'";
+                StdBELista val3 = ProductContext.MotorLE.Consulta(text2);
+                object obj = val3.DaValor<object>("HorasTotais");
+                object obj2 = val3.DaValor<object>("HorasGastas");
+                double num2 = ((obj != null) ? Math.Round(Convert.ToDouble(obj), 2) : 0.0);
+                double num3 = ((obj2 != null) ? Math.Round(Convert.ToDouble(obj2), 2) : 0.0);
+                foreach (dynamic artigo in request.Artigos)
                 {
-                    // Converter duração para horas
-                    double duracaoEmHoras = Math.Round((double)intervencao.Duracao / 60, 2);
-
-                    StpEstadoFacturacaoLinha artigoFaturacao;
-                    if (horasTotaisDouble > horasGastasDouble)
-                    {
-                        artigoFaturacao = StpEstadoFacturacaoLinha.NaoFacturar;
-                    }
-                    else
-                    {
-                        artigoFaturacao = StpEstadoFacturacaoLinha.Facturar;
-                    }
-
-
-
-
-
-                    // Criar artigo intervenção
-                    StpBEArtigoIntervencao artigoIntervencao = new StpBEArtigoIntervencao
-                    {
-                        ID = Guid.NewGuid().ToString(),
-                        Artigo = artigo.artigo ?? "SERV.CONS",
-                        Descricao = artigo.descricao ?? "ValorDefaultDescricao",
-                        Unidade = artigo.unidade ?? "",
-                        Armazem = artigo.armazem ?? "",
-                        QtdeCusto = (double)duracaoEmHoras,
-                        PrecoCusto = horacusto,
-                        QtdeCliente = (double)duracaoEmHoras,
-                        PrecoCliente = horapreco,
-                        DescontoCliente = artigo.descontoCliente ?? 0,
-                        EstadoFacturacao = artigoFaturacao,
-                        TipoLinha = "20",
-                    };
-
-                    intervencao.ArtigosIntervencao.Insere(artigoIntervencao);
-
+                    double num4 = Math.Round((double)val.Duracao / 60.0, 2);
+                    StpEstadoFacturacaoLinha estadoFacturacao = ((!(num2 > num3)) ? ((StpEstadoFacturacaoLinha)0) : ((StpEstadoFacturacaoLinha)2));
+                    StpBEArtigoIntervencao val4 = new StpBEArtigoIntervencao();
+                    val4.ID = Guid.NewGuid().ToString();
+                    val4.Artigo = artigo.artigo ?? "SERV.CONS";
+                    val4.Descricao = artigo.descricao ?? "ValorDefaultDescricao";
+                    val4.Unidade = artigo.unidade ?? "";
+                    val4.Armazem = artigo.armazem ?? "";
+                    val4.QtdeCusto = num4;
+                    val4.PrecoCusto = precoCusto;
+                    val4.QtdeCliente = num4;
+                    val4.PrecoCliente = precoCliente;
+                    val4.DescontoCliente = artigo.descontoCliente ?? ((object)0);
+                    val4.EstadoFacturacao = estadoFacturacao;
+                    val4.TipoLinha = "20";
+                    StpBEArtigoIntervencao val5 = val4;
+                    val.ArtigosIntervencao.Insere(val5);
                 }
-
-                // Registar intervenção
-                ProductContext.MotorLE.ServicosTecnicos.Intervencoes.Actualiza(intervencao);
-
-                var updateTipoServico = $@"update STP_ArtigosIntervencao
-                                            set tiposervico = 1
-                                            from  STP_ArtigosIntervencao
-                                            where IntervencaoID='{intervencao.ID}';";
-                ProductContext.MotorLE.DSO.ExecuteSQL(updateTipoServico);
-
-
-                var getValores = $@"	SELECT 
-                                        i.ProcessoID,
-                                        p.ContratoID,
-                                        c.HorasGastas,
-                                        i.ID, 
-                                        p.*, 
-                                        c.*
-                                    FROM 
-                                        STP_Intervencoes i
-                                    JOIN 
-                                        STP_Processos p ON i.ProcessoID = p.ID
-                                    JOIN 
-                                        STP_Contratos c ON p.ContratoID = c.ID
-                                    WHERE 
-                                        i.ID = '{intervencao.ID}'";
-
-                var Data = ProductContext.MotorLE.Consulta(getValores);
-                //var contratoID = Data.DaValor<object>("ContratoID");
-                var contrato = Data.DaValor<string>("ContratoID");
-                //  var cID = contratoID != null ? Convert.ToString(contratoID) : "";
-                var hgD = horasGastas != null
-                                        ? Math.Round(Convert.ToDecimal(horasGastas), 2)
-                                        : 0;
-                var cont = contrato != null ? contrato.ToString() : "";
-                var du = Math.Round((decimal)intervencao.Duracao / 60, 2);
-
-                var calculo = hgD + du;
-                var resultado = calculo.ToString(CultureInfo.InvariantCulture);
-                // Gera o comando SQL sem aspas ao redor do valor decimal
-                var dataUpdate = $@"UPDATE STP_Contratos SET HorasGastas = {resultado} FROM STP_Contratos WHERE ID = '{cont}'";
-
-
-
-                ProductContext.MotorLE.DSO.ExecuteSQL(dataUpdate);
-
-
-                return Request.CreateResponse(HttpStatusCode.OK, $"{ultimaIntervencao}");
+                ProductContext.MotorLE.ServicosTecnicos.Intervencoes.Actualiza(val, "");
+                string text3 = "update STP_ArtigosIntervencao\r\n                                            set tiposervico = 1\r\n                                            from  STP_ArtigosIntervencao\r\n                                            where IntervencaoID='" + val.ID + "';";
+                ProductContext.MotorLE.DSO.ExecuteSQL(text3);
+                string text4 = "\tSELECT \r\n                                        i.ProcessoID,\r\n                                        p.ContratoID,\r\n                                        c.HorasGastas,\r\n                                        i.ID, \r\n                                        p.*, \r\n                                        c.*\r\n                                    FROM \r\n                                        STP_Intervencoes i\r\n                                    JOIN \r\n                                        STP_Processos p ON i.ProcessoID = p.ID\r\n                                    JOIN \r\n                                        STP_Contratos c ON p.ContratoID = c.ID\r\n                                    WHERE \r\n                                        i.ID = '" + val.ID + "'";
+                StdBELista val6 = ProductContext.MotorLE.Consulta(text4);
+                string text5 = val6.DaValor<string>("ContratoID");
+                decimal num5 = ((obj2 != null) ? Math.Round(Convert.ToDecimal(obj2), 2) : 0m);
+                string text6 = ((text5 != null) ? text5.ToString() : "");
+                decimal num6 = Math.Round((decimal)val.Duracao / 60m, 2);
+                string text7 = (num5 + num6).ToString(CultureInfo.InvariantCulture);
+                string text8 = "UPDATE STP_Contratos SET HorasGastas = " + text7 + " FROM STP_Contratos WHERE ID = '" + text6 + "'";
+                ProductContext.MotorLE.DSO.ExecuteSQL(text8);
+                return Request.CreateResponse<string>(HttpStatusCode.OK, $"{num}");
             }
-            catch (Exception ex)
+            catch (Exception ex2)
             {
-                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao criar intervenção: {ex.Message}");
+                return Request.CreateResponse<string>(HttpStatusCode.InternalServerError, "Erro ao criar intervenção: " + ex2.Message);
             }
         }
-
 
         [Authorize]
         [Route("EditaId")]
@@ -4795,8 +4897,5 @@ INSERT INTO COP_FichasEquipamentoItems (
         public int? NumProc { get; set; }
         public int Origem { get; set; } = 0;
     }
-
-
-
 
 }
