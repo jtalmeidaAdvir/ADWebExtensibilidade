@@ -1187,7 +1187,11 @@ OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY";
                     ComoReproduzir = pedidoRequest.ComoReproduzir,
                     Contacto = pedidoRequest.Contacto,
                     DataHoraAbertura = pedidoRequest.datahoraabertura,
-                    DataHoraFimPrevista = DateTime.Now.AddDays(30)
+                    DataHoraFimPrevista = (pedidoRequest.datahorafimprevista == null
+                       || pedidoRequest.datahorafimprevista == DateTime.MinValue)
+    ? DateTime.Now.AddDays(30)
+    : pedidoRequest.datahorafimprevista,
+
                 };
 
                 StpBEPedido pedido1 = new StpBEPedido
@@ -1220,6 +1224,146 @@ OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY";
             catch (Exception ex)
             {
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao criar pedido: {ex.Message}");
+            }
+        }
+
+        [Authorize]
+        [Route("VerificaExisteObjeto/{Objeto}/{Descricao}")]
+        [HttpGet]
+        public HttpResponseMessage VerificaExisteObjeto(string Objeto, string Descricao)
+        {
+            try
+            {
+                string query = $@"
+                                SELECT id,Objecto FROM STP_Objectos WHERE Objecto = '{Objeto}'";
+                var response = ProductContext.MotorLE.Consulta(query);
+                var numlinahs = response.NumLinhas();
+                if (numlinahs == 0)
+                {
+                    try
+                    {
+                        var id = Guid.NewGuid().ToString();
+                        var descricao = Descricao;
+
+                        var queryInsert = $@"
+                                INSERT INTO STP_Objectos (ID, Objecto, Descricao, DataInst, Manutencao) 
+                                VALUES ('{id}', '{Objeto}', '{descricao}', GETDATE(), 0);";
+                         ProductContext.MotorLE.DSO.ExecuteSQL(queryInsert);
+
+                        string query2 = $@"
+                                SELECT id,Objecto FROM STP_Objectos WHERE Objecto = '{Objeto}'";
+                        var response2 = ProductContext.MotorLE.Consulta(query2);
+                        return Request.CreateResponse(HttpStatusCode.OK, response2);
+                    }
+                    catch
+                    {
+                        return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhuma seção encontrada.");
+                    }
+                    
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter seções: {ex.Message}");
+            }
+        }
+
+        [Authorize]
+        [Route("VerificaCliente/{cliente}")]
+        [HttpGet]
+        public HttpResponseMessage VerificaCliente(string cliente)
+        {
+            try
+            {
+                cliente = cliente.Replace("%20", " ");
+                string query = $@"
+                                SELECT Cliente,NOME
+                                FROM Clientes
+                                WHERE UPPER(NOME) LIKE '%{cliente.ToUpper()}%';
+                                ";
+                var response = ProductContext.MotorLE.Consulta(query);
+                var numlinahs = response.NumLinhas();
+                if (numlinahs == 0)
+                {
+     
+                   return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhuma cliente encontrada.");
+                    
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter seções: {ex.Message}");
+            }
+        }
+
+        [Authorize]
+        [Route("VerificaContacto/{cliente}/{telefone}")]
+        [HttpGet]
+        public HttpResponseMessage VerificaContacto(string cliente, string telefone)
+        {
+            try
+            {
+                cliente = cliente.Replace("%20", " ");
+                string query = $@"
+                                SELECT Contacto
+                                FROM Contactos
+                                WHERE CONCAT(primeiroNome, ' ', ultimoNome) = '{cliente}';
+;
+                                ";
+                var response = ProductContext.MotorLE.Consulta(query);
+                var numlinahs = response.NumLinhas();
+                if (numlinahs == 0)
+                {
+                    try
+                    {
+                        var nomes = cliente.Split(' '); // separa por espaço
+                        var primeiroNome = nomes[0]; // sempre o primeiro
+                        var ultimoNome = nomes.Length > 1 ? nomes[nomes.Length - 1] : ""; // o último
+
+                        // Pega o último código existente
+                        string queryUltimoCodigo = "SELECT TOP 1 Contacto\r\nFROM Contactos\r\nWHERE Contacto LIKE 'C[0-9][0-9][0-9]'  -- só pega os que têm C + 3 dígitos\r\nORDER BY Contacto DESC;";
+                        string ultimoCodigo = ProductContext.MotorLE.Consulta(queryUltimoCodigo).DaValor<string>("Contacto");
+
+                
+
+                        // Incrementa
+                        int numero = 1;
+                        if (!string.IsNullOrEmpty(ultimoCodigo))
+                        {
+                            numero = int.Parse(ultimoCodigo.Substring(1)) + 1; // Remove o 'C' e converte para int
+                        }
+                        string novoCodigo = "C" + numero.ToString("D3"); // D3 garante 3 dígitos (C001, C002, etc.)
+
+                        // Monta a query de insert
+                        var queryInsert = $@"
+                            INSERT INTO Contactos (id, Contacto, PrimeiroNome, UltimoNome, Telemovel, Email) 
+                            VALUES (NEWID(), '{novoCodigo}', '{primeiroNome}','{ultimoNome}', '{telefone}', '');
+                            ";
+                        ProductContext.MotorLE.DSO.ExecuteSQL(queryInsert);
+                        string query2 = $@"
+                                    SELECT Contacto
+                                    FROM Contactos
+                                    WHERE CONCAT(primeiroNome, ' ', ultimoNome) = '{cliente}';
+    ;
+                                    ";
+                        var response2 = ProductContext.MotorLE.Consulta(query2);
+                        return Request.CreateResponse(HttpStatusCode.OK, response2);
+                    }
+                    catch
+                    {
+                        return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum contacto encontrado.");
+                    }
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter Contacto: {ex.Message}");
             }
         }
 
@@ -1274,18 +1418,6 @@ OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY";
             }
         }
         
-
-
-
-
-
-
-
-
-
-
-
-
         //TODO
 
         [Authorize]
@@ -1310,11 +1442,6 @@ OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY";
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter objetos: {ex.Message}");
             }
         }
-
-
-
-
-
 
 
 
