@@ -1368,6 +1368,60 @@ OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY";
         }
 
         [Authorize]
+        [Route("GetPedidosByTecnico/{tecnico}")]
+        [HttpGet]
+        public HttpResponseMessage GetPedidosByTecnico(string tecnico)
+        {
+            try
+            {
+                string query = $@"
+                               SELECT C.Nome,P.* 
+FrOM STP_Processos  as P
+INNER JOIN clientes as C on P.Cliente = C.Cliente
+WHERE P.Tecnico = '{tecnico}' AND P.fechado <> 1 and P.Estado <> 0;
+;
+                                ";
+                var response = ProductContext.MotorLE.Consulta(query);
+                var numlinahs = response.NumLinhas();
+                if (numlinahs == 0)
+                {
+                   
+                        return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum pedido encontrado.");
+                   
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter pedido: {ex.Message}");
+            }
+        }
+
+        [Authorize]
+        [Route("FecharPedido/{idPedido}")]
+        [HttpGet]
+        public HttpResponseMessage FecharPedido(string idPedido)
+        {
+            try
+            {
+                string query = $@"
+                               UPDATE STP_Processos
+set Fechado = 1
+where id = '{idPedido}';
+;
+                                ";
+                var response = ProductContext.MotorLE.DSO.ExecuteSQL(query);
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter FecharPedido: {ex.Message}");
+            }
+        }
+
+        [Authorize]
         [Route("CriarContacto")]
         [HttpPost]
         public HttpResponseMessage CriarContacto([FromBody] CriarContactoRequest req)
