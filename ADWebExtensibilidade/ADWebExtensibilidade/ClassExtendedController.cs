@@ -3679,12 +3679,45 @@ CDU_Autorizacao = '0'
             }
 
         }
+
+
+
     }
 
 
     [RoutePrefix("AlteracoesMensais")]
     public class AlteracoesMensaisController : ApiController
     {
+
+        [Authorize]
+        [Route("GetListaFaltasFuncionariosMensal/{Mes}")]
+        [HttpGet]
+        public HttpResponseMessage GetListaFaltasFuncionariosMensal(int Mes)
+        {
+            try
+            {
+                string query = $@"
+            SELECT *
+            FROM CadastroFaltas
+            WHERE MONTH(Data) = {Mes}
+              AND YEAR(Data) = YEAR(GETDATE());
+";
+                var response = ProductContext.MotorLE.Consulta(query);
+                if (response == null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum tipo de falta encontrado.");
+                }
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+
+
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter lista de tipos de faltas: {ex.Message}");
+            }
+
+        }
+
 
 
         [Authorize]
