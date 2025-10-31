@@ -3697,10 +3697,23 @@ CDU_Autorizacao = '0'
             try
             {
                 string query = $@"
-            SELECT *
-            FROM CadastroFaltas
-            WHERE MONTH(Data) = {Mes}
-              AND YEAR(Data) = YEAR(GETDATE());
+           SELECT 
+    H.Funcionario,
+    H.Data,
+    H.HoraExtra,
+    H.Tempo AS TempoExtra,
+    F.Falta,
+    F.Horas AS HorasFalta,
+    F.Tempo AS TempoFalta,
+	F.*
+
+FROM CadastroHExtras H
+FULL JOIN CadastroFaltas F
+     ON H.Funcionario = F.Funcionario
+    AND H.Data = F.Data
+WHERE MONTH(ISNULL(F.Data, H.Data)) = {Mes}
+  AND YEAR(ISNULL(F.Data, H.Data)) = YEAR(GETDATE());
+
 ";
                 var response = ProductContext.MotorLE.Consulta(query);
                 if (response == null)
@@ -3787,10 +3800,6 @@ CDU_Autorizacao = '0'
             }
 
         }
-
-
-
-
 
         [Authorize]
         [Route("GetListaFaltasFuncionario/{codFuncionario}")]
