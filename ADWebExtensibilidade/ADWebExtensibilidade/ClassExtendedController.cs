@@ -18,6 +18,7 @@ using StdPlatBS100;
 using System.Collections;
 using System.Web.Http.Description;
 using System.Security.Cryptography;
+using System.Data.SqlClient;
 
 namespace ADWebExtensibilidade
 {
@@ -148,6 +149,29 @@ namespace ADWebExtensibilidade
 
         public string TipoContacto { get; set; }
     }
+
+
+    public class CadastroHoraExtraModel
+    {
+        public string Funcionario { get; set; }
+        public DateTime? Data { get; set; }                  // Se vier null, usamos GETDATE()
+        public string HoraExtra { get; set; }                // Se for código/tipo (ex.: "HE1"); se for numérico, muda para decimal
+        public decimal Tempo { get; set; }                   // Horas/minutos (ajusta escala na BD)
+        public int ExcluiProc { get; set; } = 0;
+        public string Observacoes { get; set; }
+        public DateTime? DataProc { get; set; }
+        public int NumPeriodoProcessado { get; set; } = 0;
+        public int JaProcessado { get; set; } = 0;
+        public int InseridoBloco { get; set; } = 0;
+        public int AnoProcessado { get; set; } = 0;
+        public int NumProc { get; set; } = 0;
+        public int IdLinhaProc { get; set; } = 0;
+        public int Origem { get; set; } = 0;
+        public string MotivoAcerto { get; set; }
+        public DateTime? Fim { get; set; }
+        public DateTime? Inicio { get; set; }
+    }
+
 
 
 
@@ -3706,6 +3730,35 @@ CDU_Autorizacao = '0'
 
         }
 
+
+        [Authorize]
+        [Route("GetListaTipoHorasExtras")]
+        [HttpGet]
+        public HttpResponseMessage GetListaTipoHorasExtras()
+        {
+            try
+            {
+                string query = $@"Select * from HorasExtras ";
+                var response = ProductContext.MotorLE.Consulta(query);
+                if (response == null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum tipo de hora extra encontrado.");
+                }
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+
+
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter lista de tipos de faltas: {ex.Message}");
+            }
+
+        }
+
+
+
+
+
         [Authorize]
         [Route("GetListaFaltasFuncionario/{codFuncionario}")]
         [HttpGet]
@@ -3753,6 +3806,32 @@ CDU_Autorizacao = '0'
             }
 
         }
+
+
+        [Authorize]
+        [Route("GetListaHorasExtrasTodosFuncionarios")]
+        [HttpGet]
+        public HttpResponseMessage GetListaHorasExtrasTodosFuncionarios()
+        {
+            try
+            {
+                string query = $@"Select * from CadastroHExtras ";
+                var response = ProductContext.MotorLE.Consulta(query);
+                if (response == null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum tipo de hora extra encontrado.");
+                }
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+
+
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter lista de horas extra: {ex.Message}");
+            }
+
+        }
+
 
         [Authorize]
         [Route("GetListaFeriasFuncionario/{codFuncionario}")]
@@ -3980,6 +4059,76 @@ WHERE Funcionario =  '{codFuncionario}' ORDER BY Ano DESC;
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao inserir falta: {ex.Message}");
             }
         }
+
+
+
+        [Authorize]
+        [Route("InserirHoraExtra")]
+        [HttpPost]
+        public HttpResponseMessage InserirHoraExtra([FromBody] CadastroHoraExtraModel novaHE)
+        {
+            try
+            {
+                if (novaHE == null || string.IsNullOrWhiteSpace(novaHE.Funcionario))
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Dados inválidos.");
+
+                // Escape básico para aspas simples
+                string Esc(string s) => s?.Replace("'", "''");
+
+                // Datas -> 'yyyy-MM-dd HH:mm:ss' ou NULL/GETDATE()
+                string dtData = novaHE.Data.HasValue ? $"'{novaHE.Data:yyyy-MM-dd HH:mm:ss}'" : "GETDATE()";
+                string dtProc = novaHE.DataProc.HasValue ? $"'{novaHE.DataProc:yyyy-MM-dd HH:mm:ss}'" : "NULL";
+                string dtFim = novaHE.Fim.HasValue ? $"'{novaHE.Fim:yyyy-MM-dd HH:mm:ss}'" : "NULL";
+                string dtInicio = novaHE.Inicio.HasValue ? $"'{novaHE.Inicio:yyyy-MM-dd HH:mm:ss}'" : "NULL";
+
+                // Numéricos com ponto como separador decimal
+                var inv = System.Globalization.CultureInfo.InvariantCulture;
+                string tempoStr = novaHE.Tempo.ToString(inv);
+
+                // Strings opcionais -> NULL ou 'valor'
+                string obsStr = string.IsNullOrWhiteSpace(novaHE.Observacoes) ? "NULL" : $"'{Esc(novaHE.Observacoes)}'";
+                string motivoAcerto = string.IsNullOrWhiteSpace(novaHE.MotivoAcerto) ? "NULL" : $"'{Esc(novaHE.MotivoAcerto)}'";
+                string horaExtraStr = string.IsNullOrWhiteSpace(novaHE.HoraExtra) ? "NULL" : $"'{Esc(novaHE.HoraExtra)}'";
+
+                string query = $@"
+INSERT INTO CadastroHExtras (
+    Funcionario, Data, HoraExtra, Tempo,
+    ExcluiProc, Observacoes, DataProc, NumPeriodoProcessado,
+    JaProcessado, InseridoBloco, AnoProcessado, NumProc,
+    IdLinhaProc, Origem, MotivoAcerto, Fim, Inicio
+)
+VALUES (
+    '{Esc(novaHE.Funcionario)}',
+    {dtData},
+    {horaExtraStr},
+    {tempoStr},
+    {novaHE.ExcluiProc},
+    {obsStr},
+    {dtProc},
+    {novaHE.NumPeriodoProcessado},
+    {novaHE.JaProcessado},
+    {novaHE.InseridoBloco},
+    {novaHE.AnoProcessado},
+    {novaHE.NumProc},
+    {novaHE.IdLinhaProc},
+    {novaHE.Origem},
+    {motivoAcerto},
+    {dtFim},
+    {dtInicio}
+);";
+
+                var resultado = ProductContext.MotorLE.DSO.ExecuteSQL(query);
+                return Request.CreateResponse(HttpStatusCode.OK, "Hora extra inserida com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao inserir hora extra: {ex.Message}");
+            }
+        }
+
+
+
+
 
         [Authorize]
         [Route("InserirFeriasFuncionario")]
@@ -4892,7 +5041,7 @@ INSERT INTO COP_FichasEquipamentoItems (
         {
             try
             {
-                string query = $@"SELECT ComponenteID, Codigo, Desig FROM Precos_Componente WHERE Tipo= 2 AND TipoValor = 0 ORDER BY 3 ";
+                string query = $@"SELECT * FROM Precos_Componente WHERE Tipo= 2 AND TipoValor = 0 ORDER BY 3 ";
                 var response = ProductContext.MotorLE.Consulta(query);
                 if (response == null)
                 {
