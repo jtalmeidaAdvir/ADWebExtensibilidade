@@ -3683,6 +3683,10 @@ CDU_Autorizacao = '0'
 
 
     }
+    public class RemoverHoraExtraModel
+    {
+        public string IdFuncRemCBL { get; set; }
+    }
 
 
     [RoutePrefix("AlteracoesMensais")]
@@ -3702,6 +3706,7 @@ CDU_Autorizacao = '0'
     H.Data,
     H.HoraExtra,
     H.Tempo AS TempoExtra,
+H.*,
     F.Falta,
     F.Horas AS HorasFalta,
     F.Tempo AS TempoFalta,
@@ -4165,6 +4170,47 @@ VALUES (
             catch (Exception ex)
             {
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao inserir hora extra: {ex.Message}");
+            }
+        }
+
+        [Authorize]
+        [Route("RemoverHoraExtra")]
+        [HttpPost]
+        public HttpResponseMessage RemoverHoraExtra([FromBody] RemoverHoraExtraModel dados)
+        {
+            try
+            {
+                if (dados == null || string.IsNullOrWhiteSpace(dados.IdFuncRemCBL))
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "IdFuncRemCBL inválido.");
+
+                string Esc(string s) => s?.Replace("'", "''");
+
+                string id = $"'{Esc(dados.IdFuncRemCBL)}'";
+
+                string query = $@"
+DELETE FROM CadastroHExtras
+WHERE idFuncRemCBL = {id};
+";
+
+                var resultado = ProductContext.MotorLE.DSO.ExecuteSQL(query);
+
+                if (resultado == 0)
+                    return Request.CreateResponse(
+                        HttpStatusCode.NotFound,
+                        "Nenhum registro encontrado para remover."
+                    );
+
+                return Request.CreateResponse(
+                    HttpStatusCode.OK,
+                    "Hora extra removida com sucesso."
+                );
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(
+                    HttpStatusCode.InternalServerError,
+                    $"Erro ao remover hora extra: {ex.Message}"
+                );
             }
         }
 
