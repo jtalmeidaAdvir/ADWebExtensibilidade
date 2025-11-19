@@ -4908,7 +4908,7 @@ INSERT INTO COP_FichasEquipamento (
                 foreach (var item in request.Itens)
                 {
                     // Validação opcional de SubEmpID para evitar FK
-                    if (item.SubEmpID.HasValue)
+  /*                  if (item.SubEmpID.HasValue)
                     {
                         var validaSubEmp = ProductContext.MotorLE.Consulta(
                             $"SELECT 1 FROM Geral_SubEmpreitada WHERE SubEmpId = {item.SubEmpID.Value}");
@@ -4922,6 +4922,7 @@ INSERT INTO COP_FichasEquipamento (
                                 $"SubEmpID {item.SubEmpID.Value} inexistente em Geral_SubEmpreitada (evitar erro de FK).");
                         }
                     }
+  */
 
                     var itemID = Guid.NewGuid();
                     var funcionarioSql = string.IsNullOrWhiteSpace(item.Funcionario)
@@ -4929,7 +4930,7 @@ INSERT INTO COP_FichasEquipamento (
                         : $"'{item.Funcionario.Replace("'", "''")}'";
 
                     var fornecedorSql = item.Fornecedor.HasValue ? item.Fornecedor.Value.ToString() : "NULL";
-                    var subEmpSql = item.SubEmpID.HasValue ? item.SubEmpID.Value.ToString() : "NULL";
+                    var subEmpSql = item.SubEmpID;
                     var horasOrdemSql = item.NumHorasOrdem.HasValue ? item.NumHorasOrdem.Value.ToString(CultureInfo.InvariantCulture) : "0";
                     var horasAvSql = item.NumHorasAvariada.HasValue ? item.NumHorasAvariada.Value.ToString(CultureInfo.InvariantCulture) : "0";
                     var precoUnit = item.PrecoUnit.HasValue ? item.PrecoUnit.Value : 0m;
@@ -4943,11 +4944,11 @@ INSERT INTO COP_FichasEquipamentoItems (
 ) VALUES (
     '{itemID}',
     '{fichaID}',
-    {item.ComponenteID},
+    {subEmpSql},
     {funcionarioSql},
     {item.ClasseID},
     {fornecedorSql},
-    {subEmpSql},
+    null,
     {item.NumHorasTrabalho.ToString(CultureInfo.InvariantCulture)},
     {horasOrdemSql},
     {horasAvSql},
