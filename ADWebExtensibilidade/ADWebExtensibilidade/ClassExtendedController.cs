@@ -19,6 +19,7 @@ using System.Collections;
 using System.Web.Http.Description;
 using System.Security.Cryptography;
 using System.Data.SqlClient;
+using RhpBE100;
 
 namespace ADWebExtensibilidade
 {
@@ -2764,63 +2765,42 @@ ORDER BY Ordem;
         {
             try
             {
-                string pastaEspecifica = @"E:\Program Files"; // Altere para o caminho desejado
-                string nomeArquivo = $"CS__{DateTime.Now:yyyyMMdd}.pdf";
-                string caminhoCompleto = Path.Combine(pastaEspecifica, nomeArquivo);
+                // Obtém o recibo
+                RhpBERecibo recibo = ProductContext.MotorLE.RecursosHumanos.Recibos.Edita(1);
 
-                // Verificar se o diretório existe, caso contrário, cria o diretório
-                if (!Directory.Exists(pastaEspecifica))
-                {
-                    Directory.CreateDirectory(pastaEspecifica);
-                }
+                if (recibo == null)
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "Recibo não encontrado.");
 
-                // Inicializar e configurar o mapa
-                ProductContext.Plataforma.Mapas.Inicializar("COP");
+                // Pasta temporária no servidor
+                string pastaTemp = Path.GetTempPath();
+                string nomeArquivo = "Recibo_teste.pdf";
+                string caminhoCompleto = Path.Combine(pastaTemp, nomeArquivo);
 
-                ProductContext.Plataforma.Mapas.Destino = StdBSTipos.CRPEExportDestino.edFicheiro;
-                ProductContext.Plataforma.Mapas.TipoFolha = StdBSTipos.CRPETipoFolha.tfA4;
-                ProductContext.Plataforma.Mapas.SetFileProp(StdBSTipos.CRPEExportFormat.efPdf, caminhoCompleto);
+                // Gera PDF
+                ProductContext.MotorLE.RecursosHumanos.Recibos.GuardaReciboComoFicheiroPdf(caminhoCompleto, recibo);
 
-                // Obter as informações do mapa
-                var mapa = ProductContext.Plataforma.Mapas.GetMapaInfo("COP", "ORCADJ1");
+                // Lê o PDF em bytes
+                byte[] pdfBytes = File.ReadAllBytes(caminhoCompleto);
 
-                ProductContext.Plataforma.Mapas.MostraErros = true;
-
-                ProductContext.Plataforma.Mapas.SetParametro("@OrcId", 3);
-                ProductContext.Plataforma.Mapas.SetParametro("@Modo", 0);
-                ProductContext.Plataforma.Mapas.SetParametro("@Depth", 99999);
-                ProductContext.Plataforma.Mapas.SetParametro("@WithTotals", false);
-                ProductContext.Plataforma.Mapas.SetParametro("@FilterGuid", string.Empty);
-                // Gerar o arquivo PDF
-                int imprimeMapa = ProductContext.Plataforma.Mapas.ImprimeListagem("ORCADJ1", "Documento", "P", 1, "N", "", 0, false, false);
-
-
-
-                // Ler o arquivo gerado em bytes
-                byte[] fileBytes = File.ReadAllBytes(caminhoCompleto);
-
-                // Converter para base64 (se necessário, mas não é obrigatório para envio do arquivo)
-                string fileString = Convert.ToBase64String(fileBytes);
-
-                // Retornar o arquivo gerado como resposta
-                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
-                response.Content = new ByteArrayContent(fileBytes);
+                // Cria resposta HTTP para download
+                HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
+                response.Content = new ByteArrayContent(pdfBytes);
                 response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
                 response.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment")
                 {
                     FileName = nomeArquivo
                 };
+
                 return response;
-
-
-
             }
             catch (Exception ex)
             {
-                // Capturar e retornar o erro
-                return Request.CreateResponse(HttpStatusCode.InternalServerError, new { message = $"Erro ao obter: {ex.Message}" });
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao gerar PDF: {ex.Message}");
             }
         }
+
+
+
 
 
     }
@@ -4854,6 +4834,148 @@ WHERE
             }
         }
 
+        [Authorize]
+        [Route("InsertParteDiariaItemJPA")]
+        [HttpPost]
+        public HttpResponseMessage InsertParteDiariaItemJPA([FromBody] ParteDiariaJPARequestDto request)
+        {
+            try
+            {
+                if (request == null)
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Request é nulo");
+
+                if (request.Cabecalho == null)
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Cabecalho é nulo");
+
+                if (request.Itens == null || !request.Itens.Any())
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Itens estão nulos ou vazios");
+                // Depois de cada passo importante
+                var debugInfo = new List<string>();
+                debugInfo.Add("Request válido, começando inserção...");
+
+
+                var queryGetultimoNumero = "SELECt TOP 1 numero FROM COP_FichasPessoal ORDER BY Numero desc";
+                var dadosqueryGetultimoNumero = ProductContext.MotorLE.Consulta(queryGetultimoNumero);
+
+              
+
+
+                if (dadosqueryGetultimoNumero == null)
+                    return Request.CreateResponse(HttpStatusCode.InternalServerError, "dadosqueryGetultimoNumero retornou nulo");
+             
+                var numeroSQL = dadosqueryGetultimoNumero.DaValor<int>("numero") + 1;
+                debugInfo.Add($"Próximo número: {numeroSQL}");
+                var idguid = Guid.NewGuid();
+                debugInfo.Add($"GUID gerado: {idguid}");
+                var cab = request.Cabecalho;
+
+
+                var queryGetidObraporDescricao = $@"SELECT ID FROM COP_Obras WHERE Descricao = '{cab.ObraID}'";
+                var ObraID = ProductContext.MotorLE.Consulta(queryGetidObraporDescricao).DaValor<Guid>("ID");
+
+
+                var queryInsertCabecParteDiaria = $@"
+                   INSERT INTO COP_FichasPessoal
+                       ([ID], 
+                        [Numero], 
+                        [ObraID], 
+                        [Data], 
+                        [Encarregado], 
+                        [Notas], 
+                        [CabecMovCBLID], 
+                        [LigaCBL],
+                        [CriadoPor], 
+                        [Utilizador], 
+                        [DataUltimaActualizacao], 
+                        [DocumentoID], 
+                        [TipoEntidade], 
+                        [SubEmpreiteiroID], 
+                        [ColaboradorID], 
+                        [Validado]
+                       )
+                   VALUES 
+                       (
+                           '{idguid}',             -- ID
+                           {numeroSQL},            -- Numero
+                           '{ObraID}',         -- ObraID
+                        GETDATE(),               -- Data
+                        NULL,                    -- Encarregado
+                           '{cab.Notas.Replace("'", "''")}', -- Notas
+                        NULL,                    -- CabecMovCBLID
+                        -1,                    -- LigaCBL
+                        NULL,                    -- CriadoPor
+                        NULL,                    -- Utilizador
+                        GETDATE(),   
+                        NULL,                    -- DocumentoID
+                        NULL,                    -- TipoEntidade
+                        NULL,                    -- SubEmpreiteiroID
+                        NULL,                    -- ColaboradorID
+                        0                        -- Validado
+                       );";
+
+             
+              ProductContext.MotorLE.DSO.ExecuteSQL(queryInsertCabecParteDiaria);
+
+
+
+              foreach (var item in request.Itens)
+              {
+                  var getColcaboradorID = $@"	   SELECT O.IDOperador FROM GPR_Operadores AS O
+     INNER JOIN Funcionarios AS F ON O.Funcionario = F.Codigo
+     WHERE F.Codigo = '{item.Funcionario}'";
+
+                    var listaCol = ProductContext.MotorLE.Consulta(getColcaboradorID);
+
+                    if (listaCol == null || listaCol.Vazia())
+                    {
+                        debugInfo.Add($"Colaborador não encontrado e ignorado: {item.Funcionario}");
+                        continue; // pula para o próximo item
+                    }
+
+                    var dadosGetColaboradorID = ProductContext.MotorLE.Consulta(getColcaboradorID).DaValor<int>("IDOperador");
+
+                  var queryInsertParteDiariasLinhas = $@"
+                  INSERT INTO COP_FichasPessoalItems
+                      ([ID], 
+                      [FichasPessoalID], 
+                      ColaboradorID, 
+                      [ClasseID], 
+                      [SubEmpID], 
+                      [NumHoras], 
+                      [TipoEntidade], 
+                      [Data],
+                      ComponenteID
+                      )
+                  VALUES 
+                      (
+                           NEWID(),    
+                          '{idguid}',              
+                            {dadosGetColaboradorID},  
+                            95,
+                          NULL,
+                      {item.NumHoras.ToString(CultureInfo.InvariantCulture)},
+                          NULL,     
+                           '{item.Data:yyyy-MM-dd}',
+                          ''
+                      );";
+
+                  ProductContext.MotorLE.DSO.ExecuteSQL(queryInsertParteDiariasLinhas);
+                }
+
+
+
+                return Request.CreateResponse(HttpStatusCode.OK, new { Mensagem = "Parte diária inserida", Debug = debugInfo });
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, new { Erro = ex.Message, StackTrace = ex.StackTrace });
+            }
+        }
+
+
+
+
+
 
 
         [Authorize]
@@ -5243,6 +5365,38 @@ INSERT INTO COP_FichasEquipamentoItems (
         public List<ParteDiariaItemDto> Itens { get; set; }
     }
 
+    public class ParteDiariaJPARequestDto
+    {
+        public ParteDiariaCabecalhoJPADto Cabecalho { get; set; }
+        public List<ParteDiariaItemJPADto> Itens { get; set; }
+    }
+    public class ParteDiariaCabecalhoJPADto
+    {
+        public int Numero { get; set; }
+        public string ObraID { get; set; }
+        public DateTime Data { get; set; }
+        public string Notas { get; set; }
+        public string CriadoPor { get; set; }
+        public string Utilizador { get; set; }
+        public Guid DocumentoID { get; set; }
+        public string TipoEntidade { get; set; } = "O";
+        public int? ColaboradorID { get; set; }
+    }
+
+    public class ParteDiariaItemJPADto
+    {
+        public int ComponenteID { get; set; }
+        public string Funcionario { get; set; }
+        public string TipoHoraID { get; set; }
+        public int ClasseID { get; set; }
+        public int? SubEmpID { get; set; }
+        public decimal NumHoras { get; set; }
+        public decimal PrecoUnit { get; set; }
+        public string TipoEntidade { get; set; } = "O";
+        public int ColaboradorID { get; set; }
+        public DateTime Data { get; set; }
+        public string Observacoes { get; set; }
+    }
     public class ParteDiariaCabecalhoDto
     {
         public int Numero { get; set; }

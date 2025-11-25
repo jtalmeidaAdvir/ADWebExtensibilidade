@@ -46,6 +46,7 @@
     <Reference Include="IBasDS100">
       <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IBasDS100.dll</HintPath>
     </Reference>
+    <Reference Include="ICctBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173" />
     <Reference Include="ICmpBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173">
       <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ICmpBS100.dll</HintPath>
     </Reference>
@@ -58,12 +59,14 @@
     <Reference Include="IInvBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173">
       <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IInvBS100.dll</HintPath>
     </Reference>
+    <Reference Include="IRhpBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173" />
     <Reference Include="IStpBS100">
       <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IStpBS100.dll</HintPath>
     </Reference>
     <Reference Include="IVndBS100">
       <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IVndBS100.dll</HintPath>
     </Reference>
+    <Reference Include="IVusBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173" />
     <Reference Include="Microsoft.Owin, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Owin.4.0.0\lib\net451\Microsoft.Owin.dll</HintPath>
     </Reference>
@@ -82,6 +85,7 @@
     <Reference Include="Primavera.WebAPI.Integration">
       <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\WebApi\bin\Primavera.WebAPI.Integration.dll</HintPath>
     </Reference>
+    <Reference Include="RhpBE100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173" />
     <Reference Include="StdBE100">
       <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\StdBE100.dll</HintPath>
     </Reference>
