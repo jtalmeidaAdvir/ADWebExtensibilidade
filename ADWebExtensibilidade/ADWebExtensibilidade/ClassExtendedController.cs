@@ -4870,7 +4870,7 @@ WHERE
                 var cab = request.Cabecalho;
 
 
-                var queryGetidObraporDescricao = $@"SELECT ID FROM COP_Obras WHERE Descricao = '{cab.ObraID}'";
+                var queryGetidObraporDescricao = $@"SELECT ID FROM COP_Obras WHERE Codigo = '{cab.ObraID}'";
                 var ObraID = ProductContext.MotorLE.Consulta(queryGetidObraporDescricao).DaValor<Guid>("ID");
 
 
@@ -4920,10 +4920,10 @@ WHERE
 
               foreach (var item in request.Itens)
               {
-                  var getColcaboradorID = $@"	   SELECT O.IDOperador FROM GPR_Operadores AS O
+                  var getColcaboradorID = $@"	   SELECT O.IDOperador,F.CustoPadrao FROM GPR_Operadores AS O
      INNER JOIN Funcionarios AS F ON O.Funcionario = F.Codigo
      WHERE F.Codigo = '{item.Funcionario}'";
-
+                 
                     var listaCol = ProductContext.MotorLE.Consulta(getColcaboradorID);
 
                     if (listaCol == null || listaCol.Vazia())
@@ -4932,9 +4932,14 @@ WHERE
                         continue; // pula para o próximo item
                     }
 
-                    var dadosGetColaboradorID = ProductContext.MotorLE.Consulta(getColcaboradorID).DaValor<int>("IDOperador");
 
-                  var queryInsertParteDiariasLinhas = $@"
+
+
+
+                    var dadosGetColaboradorID = ProductContext.MotorLE.Consulta(getColcaboradorID).DaValor<int>("IDOperador");
+                    var precoUnitario = ProductContext.MotorLE.Consulta(getColcaboradorID).DaValor<decimal>("CustoPadrao");
+
+                    var queryInsertParteDiariasLinhas = $@"
                   INSERT INTO COP_FichasPessoalItems
                       ([ID], 
                       [FichasPessoalID], 
@@ -4944,7 +4949,8 @@ WHERE
                       [NumHoras], 
                       [TipoEntidade], 
                       [Data],
-                      ComponenteID
+                      ComponenteID,
+                        PrecoUnit
                       )
                   VALUES 
                       (
@@ -4956,7 +4962,8 @@ WHERE
                       {item.NumHoras.ToString(CultureInfo.InvariantCulture)},
                           NULL,     
                            '{item.Data:yyyy-MM-dd}',
-                          ''
+                          '',
+                        {precoUnitario.ToString(CultureInfo.InvariantCulture)}  
                       );";
 
                   ProductContext.MotorLE.DSO.ExecuteSQL(queryInsertParteDiariasLinhas);
