@@ -1854,19 +1854,16 @@ C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibil
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\Primavera.Platform.Exceptions.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\ErpBE100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\ITesBS100.dll
-C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\ICctBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\IPrjBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\IOrcBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\IPcmBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\ITTEBS100.dll
-C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\IRhpBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\IGabBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\IEapBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\ICnoBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\ICblBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\IFacBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\ICrmBS100.dll
-C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\IVusBS100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\Primavera.Platform.CoreServices100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\StdServices100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\AdmEngine100.dll
@@ -1998,7 +1995,6 @@ C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibil
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\PrjBE100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\CblBE100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\TTEBE100.dll
-C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\RhpBE100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\Primavera.VisualTime.Client.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\GabBE100.dll
 C:\Users\jpval\Desktop\ADWebExtensibilidade\ADWebExtensibilidade\ADWebExtensibilidade\bin\Debug\EapBE100.dll

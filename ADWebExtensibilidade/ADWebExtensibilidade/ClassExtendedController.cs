@@ -5012,6 +5012,31 @@ WHERE
 
 
 
+        private decimal ObterPrecoEquipamento(string codigo)
+        {
+            var queryPreco = $@"
+    SELECT v.valor
+    FROM COP_Precos_Objetos p
+    INNER JOIN COP_Precos_Objetos_Valores v
+    ON p.id = v.ObjetoID
+    WHERE p.ObjetoID = '{codigo}'";
+
+            var resultado = ProductContext.MotorLE.Consulta(queryPreco);
+            if (!resultado.Vazia())
+            {
+                resultado.Inicio();
+                var valor = resultado.Valor("valor");
+                resultado.Termina();
+                if (valor != null)
+                {
+                    decimal preco = 0m;
+                    if (decimal.TryParse(valor.ToString(), out preco))
+                        return preco;
+                }
+            }
+
+            return 0m; // Default se não encontrar
+        }
 
 
 
@@ -5095,7 +5120,8 @@ WHERE
                     var subEmpSql = item.SubEmpID;
                     var horasOrdemSql = item.NumHorasOrdem.HasValue ? item.NumHorasOrdem.Value.ToString(CultureInfo.InvariantCulture) : "0";
                     var horasAvSql = item.NumHorasAvariada.HasValue ? item.NumHorasAvariada.Value.ToString(CultureInfo.InvariantCulture) : "0";
-                    var precoUnit = item.PrecoUnit.HasValue ? item.PrecoUnit.Value : 0m;
+                    var precoUnit = ObterPrecoEquipamento(item.SubEmpID.ToString());
+
                     var itemIdSql = item.ItemId.HasValue ? $"'{item.ItemId.Value}'" : "NULL";
 
                     var queryItem = $@"
@@ -5514,5 +5540,8 @@ INSERT INTO COP_FichasEquipamentoItems (
         public int? NumProc { get; set; }
         public int Origem { get; set; } = 0;
     }
+
+
+
 
 }
