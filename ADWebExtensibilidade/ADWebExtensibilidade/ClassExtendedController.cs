@@ -4169,7 +4169,7 @@ VALUES (
 
                 string query = $@"
 DELETE FROM CadastroHExtras
-WHERE idFuncRemCBL = {id};
+WHERE idFuncRemCBL = {id} and japrocessado=0;
 ";
 
                 var resultado = ProductContext.MotorLE.DSO.ExecuteSQL(query);
@@ -4611,6 +4611,37 @@ WHERE
 
 
         [Authorize]
+        [Route("GetEmailResponsabelObra/{codigoObra}")]
+        [HttpGet]
+        public HttpResponseMessage GetEmailResponsabelObra(string codigoObra)
+        {
+            try
+            {
+                string query = $@"
+            SELECT o.CDU_respobra, u.Email
+            FROM [PRIJPA].[dbo].COP_Obras o
+            JOIN [PRIEMPRE].[dbo].[Utilizadores] u
+                ON o.CDU_respobra = u.Nome
+            WHERE o.CDU_respobra IS NOT NULL
+              AND o.Codigo = '{codigoObra}';";
+
+                var response = ProductContext.MotorLE.Consulta(query);
+
+                if (response == null || response.Vazia())
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum responsavel encontrado.");
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter responsavel: {ex.Message}");
+            }
+        }
+
+
+        [Authorize]
         [Route("DeleteParteDiaria")]
         [HttpDelete]
         public HttpResponseMessage DeleteParteDiaria([FromUri] int numero, [FromUri] string obraID)
@@ -5014,23 +5045,23 @@ WHERE
                     : $"'{cab.Encarregado.Replace("'", "''")}'";
 
                 var queryCabecalho = $@"
-INSERT INTO COP_FichasEquipamento (
-    ID, Numero, ObraID, Data, Encarregado, Notas,
-    CabecMovCBLID, LigaCBL, CriadoPor, Utilizador, DataUltimaActualizacao, DocumentoID
-) VALUES (
-    '{fichaID}',
-    {novoNumero},
-    '{cab.ObraID}',
-    '{cab.Data:yyyy-MM-dd}',
-    {encarregadoSql},
-    '{(cab.Notas ?? string.Empty).Replace("'", "''")}',
-    NULL,
-    -1,
-    '{cab.CriadoPor}',
-    '{cab.Utilizador}',
-    GETDATE(),
-    '{cab.DocumentoID}'
-)";
+                                        INSERT INTO COP_FichasEquipamento (
+                                            ID, Numero, ObraID, Data, Encarregado, Notas,
+                                            CabecMovCBLID, LigaCBL, CriadoPor, Utilizador, DataUltimaActualizacao, DocumentoID
+                                        ) VALUES (
+                                            '{fichaID}',
+                                            {novoNumero},
+                                            '{cab.ObraID}',
+                                            '{cab.Data:yyyy-MM-dd}',
+                                            {encarregadoSql},
+                                            '{(cab.Notas ?? string.Empty).Replace("'", "''")}',
+                                            NULL,
+                                            -1,
+                                            '{cab.CriadoPor}',
+                                            '{cab.Utilizador}',
+                                            GETDATE(),
+                                            '{cab.DocumentoID}'
+                                        )";
                 ProductContext.MotorLE.DSO.ExecuteSQL(queryCabecalho);
 
                 // 3) Inserir Itens
@@ -5052,6 +5083,8 @@ INSERT INTO COP_FichasEquipamento (
                         }
                     }
   */
+
+
 
                     var itemID = Guid.NewGuid();
                     var funcionarioSql = string.IsNullOrWhiteSpace(item.Funcionario)
@@ -5094,6 +5127,7 @@ INSERT INTO COP_FichasEquipamentoItems (
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao inserir parte diária de equipamentos: {ex.Message}");
             }
         }
+
 
 
 
@@ -5329,6 +5363,9 @@ INSERT INTO COP_FichasEquipamentoItems (
 
 
     }
+
+
+
     public class CadastroFaltaModel
     {
         public string Funcionario { get; set; }
