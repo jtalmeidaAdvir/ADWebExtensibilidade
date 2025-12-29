@@ -4937,7 +4937,7 @@ WHERE
                         NULL,                    -- CriadoPor
                         NULL,                    -- Utilizador
                         GETDATE(),   
-                        NULL,                    -- DocumentoID
+                        {cab.DocumentoID},                    -- DocumentoID
                         NULL,                    -- TipoEntidade
                         NULL,                    -- SubEmpreiteiroID
                         NULL,                    -- ColaboradorID
