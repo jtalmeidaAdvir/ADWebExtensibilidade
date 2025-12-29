@@ -4907,22 +4907,9 @@ WHERE
 
                 var queryInsertCabecParteDiaria = $@"
                    INSERT INTO COP_FichasPessoal
-                       ([ID], 
-                        [Numero], 
-                        [ObraID], 
-                        [Data], 
-                        [Encarregado], 
-                        [Notas], 
-                        [CabecMovCBLID], 
-                        [LigaCBL],
-                        [CriadoPor], 
-                        [Utilizador], 
-                        [DataUltimaActualizacao], 
-                        [DocumentoID], 
-                        [TipoEntidade], 
-                        [SubEmpreiteiroID], 
-                        [ColaboradorID], 
-                        [Validado]
+                       (       ID, Numero, ObraID, Data, Notas,
+                CabecMovCBLID, LigaCBL, CriadoPor, Utilizador, DataUltimaActualizacao,
+                DocumentoID, TipoEntidade, SubEmpreiteiroID, ResponsavelID, Validado, ColaboradorID
                        )
                    VALUES 
                        (
@@ -4930,18 +4917,18 @@ WHERE
                            {numeroSQL},            -- Numero
                            '{ObraID}',         -- ObraID
                         GETDATE(),               -- Data
-                        NULL,                    -- Encarregado
                            '{cab.Notas.Replace("'", "''")}', -- Notas
                         NULL,                    -- CabecMovCBLID
                         -1,                    -- LigaCBL
                         NULL,                    -- CriadoPor
                         NULL,                    -- Utilizador
                         GETDATE(),   
-                        {cab.DocumentoID},                    -- DocumentoID
+                        '1747FEA9-5D2F-45B4-A89B-9EA30B1E0DCB',                    -- DocumentoID
                         NULL,                    -- TipoEntidade
                         NULL,                    -- SubEmpreiteiroID
-                        NULL,                    -- ColaboradorID
-                        0                        -- Validado
+                        NULL,                    -- ResponsavelID
+                        0,                        -- Validado
+                        1
                        );";
 
              
@@ -4951,7 +4938,7 @@ WHERE
 
               foreach (var item in request.Itens)
               {
-                  var getColcaboradorID = $@"	   SELECT O.IDOperador,F.CustoPadrao FROM GPR_Operadores AS O
+                  var getColcaboradorID = $@"	   SELECT O.IDOperador,F.CustoPadrao,f.Nome FROM GPR_Operadores AS O
      INNER JOIN Funcionarios AS F ON O.Funcionario = F.Codigo
      WHERE F.Codigo = '{item.Funcionario}'";
                  
@@ -4968,33 +4955,45 @@ WHERE
 
 
                     var dadosGetColaboradorID = ProductContext.MotorLE.Consulta(getColcaboradorID).DaValor<int>("IDOperador");
+                    var nomefuncionario = ProductContext.MotorLE.Consulta(getColcaboradorID).DaValor<string>("Nome");
                     var precoUnitario = ProductContext.MotorLE.Consulta(getColcaboradorID).DaValor<decimal>("CustoPadrao");
+
+                    var queryClassID = $@"SELECT GC.ClasseId FROM COP_Obras_Pessoal  AS OP
+INNER JOIN Geral_Classe AS GC ON OP.ClasseID = GC.ID
+WHERE OP.obraID  = '{ObraID}' and OP.ColaboradorID = '{dadosGetColaboradorID}'";
+                    var resultado = ProductContext.MotorLE.Consulta(queryClassID);
+
+                    var classeID = resultado.NumLinhas() > 0
+                        ? resultado.DaValor<int>("ClasseId")
+                        : -1;
+
+
+
+
 
                     var queryInsertParteDiariasLinhas = $@"
                   INSERT INTO COP_FichasPessoalItems
-                      ([ID], 
-                      [FichasPessoalID], 
-                      ColaboradorID, 
-                      [ClasseID], 
-                      [SubEmpID], 
-                      [NumHoras], 
-                      [TipoEntidade], 
-                      [Data],
-                      ComponenteID,
-                        PrecoUnit
+                      (            ID, FichasPessoalID, ComponenteID, Funcionario, ClasseID,
+            SubEmpID, NumHoras, PrecoUnit, TipoEntidade, ColaboradorID,
+            Data, TotalHoras, Integrado, TipoHoraID
                       )
                   VALUES 
                       (
                            NEWID(),    
                           '{idguid}',              
-                            {dadosGetColaboradorID},  
-                            95,
+                            '16',  -- TODOOOOOOOO BUSCAR ComponenteID
+'{nomefuncionario}',  -- TODOOOOOOOO BUSCAR Funcionario
+                            '{classeID}',  -- TODOOOOOOOO BUSCAR CLASSE
                           NULL,
                       {item.NumHoras.ToString(CultureInfo.InvariantCulture)},
-                          NULL,     
+ {precoUnitario.ToString(CultureInfo.InvariantCulture)}  ,
+                            'O',    
+                          '{dadosGetColaboradorID}',     
                            '{item.Data:yyyy-MM-dd}',
-                          '',
-                        {precoUnitario.ToString(CultureInfo.InvariantCulture)}  
+                          0,
+                            0,
+                             NULL
+                       
                       );";
 
                   ProductContext.MotorLE.DSO.ExecuteSQL(queryInsertParteDiariasLinhas);
