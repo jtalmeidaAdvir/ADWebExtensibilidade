@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{55FEBF56-15A8-4881-9621-97390BB83C77}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ADWebExtensibilidade</RootNamespace>
+    <AssemblyName>ADWebExtensibilidade</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="BasBE100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\BasBE100.dll</HintPath>
+    </Reference>
+    <Reference Include="ErpBS100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ErpBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="ErpDS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ErpDS100.dll</HintPath>
+    </Reference>
+    <Reference Include="IBasBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IBasBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="IBasDS100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IBasDS100.dll</HintPath>
+    </Reference>
+    <Reference Include="ICctBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173" />
+    <Reference Include="ICmpBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ICmpBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="IGprBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IGprBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="IIntBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IIntBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="IInvBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IInvBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="IntBE100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IntBE100.dll</HintPath>
+    </Reference>
+    <Reference Include="IRhpBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173" />
+    <Reference Include="IStpBS100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IStpBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="IVndBS100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IVndBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="IVusBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173" />
+    <Reference Include="Microsoft.Owin, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.4.0.0\lib\net451\Microsoft.Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="PcmBS100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\PcmBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="Primavera.WebAPI.Extensions">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\WebApi\bin\Primavera.WebAPI.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Primavera.WebAPI.Integration">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\WebApi\bin\Primavera.WebAPI.Integration.dll</HintPath>
+    </Reference>
+    <Reference Include="RhpBE100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173" />
+    <Reference Include="StdBE100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\StdBE100.dll</HintPath>
+    </Reference>
+    <Reference Include="StdPlatBE100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173" />
+    <Reference Include="StdPlatBS100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=11cd844aca152173">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\StdPlatBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="StpBE100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\StpBE100.dll</HintPath>
+    </Reference>
+    <Reference Include="StpBS100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\StpBS100.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Activities" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.6\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Web.Http, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.6\lib\net45\System.Web.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.WebHost, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.6\lib\net45\System.Web.Http.WebHost.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Workflow.Runtime" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="VndBE100">
+      <HintPath>..\..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\VndBE100.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ClassExtendedController.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
