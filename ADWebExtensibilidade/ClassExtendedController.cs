@@ -1955,6 +1955,53 @@ COP_Obras.TipoEntidadeB WHEN '1' THEN 'Dono da Obra' WHEN '2' THEN 'Empreiteiro'
             }
         }
 
+
+
+        [Authorize]
+        [Route("GetDataEfetivaArranque")]
+        [HttpGet]
+        public HttpResponseMessage GetDataEfetivaArranque()
+        {
+            try
+            {
+                // 1️⃣ Verificar se a coluna existe
+                string checkColumnQuery = @"
+            SELECT COUNT(*) 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = 'COP_Obras' 
+              AND COLUMN_NAME = 'CDU_DataEfetivaArranque'";
+
+                var columnExists = ProductContext.MotorLE.Consulta(checkColumnQuery);
+
+                bool exists = false;
+
+                if (columnExists != null && columnExists.NumLinhas() > 0)
+                {
+                    exists = Convert.ToInt32(columnExists.Valor(0)) > 0;
+                }
+
+                // 2️⃣ Se existir, faz o SELECT normal
+                if (exists)
+                {
+                    string query = @"SELECT CDU_DataEfetivaArranque FROM COP_Obras;";
+                    var response = ProductContext.MotorLE.Consulta(query);
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+
+                // 3️⃣ Se não existir, devolve vazio (ou null)
+                return Request.CreateResponse<object>(HttpStatusCode.OK, null);
+
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(
+                    HttpStatusCode.InternalServerError,
+                    $"Erro ao obter a Data: {ex.Message}"
+                );
+            }
+        }
+
+
         [Authorize]
         [Route("GetResponsavel/{codigo}")]
         [HttpGet]
