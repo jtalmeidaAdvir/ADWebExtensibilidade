@@ -1957,13 +1957,16 @@ COP_Obras.TipoEntidadeB WHEN '1' THEN 'Dono da Obra' WHEN '2' THEN 'Empreiteiro'
 
 
 
+
         [Authorize]
-        [Route("GetDataEfetivaArranque")]
+        [Route("GetDataEfetivaArranque/{*codigo}")]
         [HttpGet]
-        public HttpResponseMessage GetDataEfetivaArranque()
+        public HttpResponseMessage GetDataEfetivaArranque(string codigo)
         {
             try
             {
+                codigo = codigo.TrimEnd('/');
+
                 // 1️⃣ Verificar se a coluna existe
                 string checkColumnQuery = @"
             SELECT COUNT(*) 
@@ -1983,7 +1986,7 @@ COP_Obras.TipoEntidadeB WHEN '1' THEN 'Dono da Obra' WHEN '2' THEN 'Empreiteiro'
                 // 2️⃣ Se existir, faz o SELECT normal
                 if (exists)
                 {
-                    string query = @"SELECT CDU_DataEfetivaArranque FROM COP_Obras;";
+                    string query = $@"SELECT CDU_DataEfetivaArranque FROM COP_Obras where codigo = '{codigo}';";
                     var response = ProductContext.MotorLE.Consulta(query);
                     return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
@@ -2000,6 +2003,7 @@ COP_Obras.TipoEntidadeB WHEN '1' THEN 'Dono da Obra' WHEN '2' THEN 'Empreiteiro'
                 );
             }
         }
+
 
 
         [Authorize]
