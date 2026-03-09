@@ -2099,6 +2099,10 @@ COP_Obras.TipoEntidadeB WHEN '1' THEN 'Dono da Obra' WHEN '2' THEN 'Empreiteiro'
             }
         }
 
+
+
+
+
         [Authorize]
         [Route("GetSubempreitadas_Real/{IdObra}")]
         [HttpGet]
@@ -2795,6 +2799,51 @@ ORDER BY Ordem;
         }
 
     }
+
+    [RoutePrefix("RHP")]
+    public class RHPController : ApiController
+    {
+        [Authorize]
+        [Route("GetRecibo/{NmMes}")]
+        [HttpGet]
+        public HttpResponseMessage GetRecibo(int NmMes)
+        {
+            try
+            {
+                // Validação - garante que é um mês válido e evita SQL Injection
+                if (NmMes < 1 || NmMes > 12)
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Mês inválido. Insira um valor entre 1 e 12.");
+
+                var query = $@"
+                SELECT DISTINCT
+                    M.Funcionario,
+                    F.Nome,
+                    TotalLiquido = ISNULL(R.TotalLiquido, M.TotalLiquido)
+                FROM MovimentosFuncionarios M
+                LEFT JOIN Funcionarios F ON M.Funcionario = F.Codigo
+                LEFT JOIN Recibos R ON (M.Funcionario = R.CodFunc AND M.NumProc = R.NumProc)
+                WHERE 
+                    (M.Valor <> 0 OR M.Origem NOT IN (0, 5, 22, 21))
+                    AND MONTH(M.DataMov) = {NmMes}
+                    AND YEAR(M.DataMov) = YEAR(GETDATE())
+                    AND NOT (R.PDF IS NULL)
+                    AND M.TipoVenc IN (1, 4, 2, 3)
+                ORDER BY M.Funcionario";
+
+                var response = ProductContext.MotorLE.Consulta(query);
+
+                if (response == null)
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "Nenhum recibo encontrado.");
+
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Erro ao obter recibos: {ex.Message}");
+            }
+        }
+    }
+
 
     [RoutePrefix("Base")]
     public class BaseController : ApiController
